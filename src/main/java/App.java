@@ -38,36 +38,23 @@ public class App {
     Dataset numDataset = TDBFactory.createDataset(numDirectory);
     Model numData = numDataset.getDefaultModel();
 
+
+    //combine models
     Model combinedDataModel = ModelFactory.createUnion(factData, numData);
     Model dbpediaBaseModel = ModelFactory.createUnion(combinedDataModel, typeData);
 
-
-    //In documentation:
-    // Model add(Model m)
-    // Add all the statements in another model
-
-    //Validate the model
-    /*
-    /System.out.println("dbpediaModel");
-    validateModel(typeModel);
-    System.out.println();
-    */
-
-
-    //Builds type based model
-    //Reasoner typeReasoner = ReasonerRegistry.getRDFSReasoner();
-    //typeReasoner = typeReasoner.bindSchema(schema);
-    //InfModel typeModel = ModelFactory.createInfModel(typeReasoner, typeData);
-
-    //Builds factual based model
-    //Reasoner factReasoner = ReasonerRegistry.getRDFSReasoner();
-    //factReasoner = factReasoner.bindSchema(schema);
-    //InfModel factModel = ModelFactory.createInfModel(factReasoner, factData);
-
-    //Build combined model
+    //Build combined inference model
     Reasoner dbpediaReasoner = ReasonerRegistry.getRDFSReasoner();
     dbpediaReasoner = dbpediaReasoner.bindSchema(dbpediaSchema);
     InfModel dbpediaInfModel = ModelFactory.createInfModel(dbpediaReasoner, dbpediaBaseModel);
+
+
+	//Validate the model
+    /*
+    /System.out.println("dbpediaInfModel");
+    validateModel(dbpediaInfModel);
+    System.out.println();
+    */
 
 
 
@@ -77,9 +64,9 @@ public class App {
     Property birthPlace = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/birthPlace");
     Resource abe_home;
     Property country = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/country");
+
+
     // If Abraham Lincoln is type Person -> Is Abraham Lincoln a person?
-
-
     if (dbpediaInfModel.contains(abe, RDF.type, person)) {
       System.out.println("Abraham Lincoln is a person.");
 
@@ -109,8 +96,27 @@ public class App {
       System.out.println("Abraham Lincoln was failed to be recognized as a person");
     }
 
+    //Test inference shortcut
+    System.out.println("iterate:");
+
+    ResIterator peopleWithBirthPlace = dbpediaInfModel.listResourcesWithProperty(birthPlace);
+    int count = 0;
+    while(count < 30){
+    	try{
+    		System.out.println(peopleWithBirthPlace.nextResource().getURI());
+    	}
+    	catch(Exception e){
+    		break;
+    	}
+    	count++;
+    }
+
+
+
+
     System.out.println("done");
   }
+
 
   /*
   public static void validateModel(InfModel m){
