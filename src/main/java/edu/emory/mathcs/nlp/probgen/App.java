@@ -1,9 +1,7 @@
 package edu.emory.mathcs.nlp.probgen;
-import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.LinkedHashSet;
@@ -78,7 +76,6 @@ class RandomWalk{
 		}
 
 
-
 		NodeIterator candidates = dbpediaInfModel.listObjectsOfProperty(previousResource, previousRandomProperty);
 
 		ArrayList<Literal> nextLiteral = new ArrayList<Literal>();
@@ -126,8 +123,6 @@ class RandomWalk{
 			}
 
 		}
-
-
 
 		Resource resultResource = nextResource.get(new Random().nextInt(nextResource.size()));
 
