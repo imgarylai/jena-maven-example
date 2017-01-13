@@ -71,8 +71,10 @@ public class NumericProb {
 //                    System.out.println(object);
 //                    System.out.println(getNum(object));
 //                    System.out.println(getUnit(object));
-                    final List<Object> stat = Arrays.asList(new Object[] { subject.toString(), predicate.toString(), getNum(object), getUnit(object) });
-                    listWriter.write(stat, processors);
+                    if(checkUnit(object)) {
+                        final List<Object> stat = Arrays.asList(new Object[] { subject.toString(), predicate.toString(), getNum(object), getUnit(object) });
+                        listWriter.write(stat, processors);
+                    }
                 }
             }
 
@@ -108,6 +110,12 @@ public class NumericProb {
             System.out.println("Error:" + e.getMessage());
         }
         return m.group();
+    }
+
+    private static boolean checkUnit(RDFNode object) {
+        String line = object.toString();
+        String unitPattern = "http://www.w3.org/2001/XMLSchema";
+        return line.contains(unitPattern);
     }
 }
 
