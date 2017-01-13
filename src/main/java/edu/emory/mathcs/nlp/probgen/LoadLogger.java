@@ -12,12 +12,12 @@ public class LoadLogger {
     public static void loadLogger() {
         final String log4jFile = "/src/main/resources/edu/emory/mathcs/nlp/probgen/log4j.properties";
         try {
-            System.out.println("log4j loaded successfully");
+            //System.out.println("log4j loaded successfully");
             Properties props = new Properties();
             props.load(new FileInputStream(log4jFile));
             PropertyConfigurator.configure(props);
         } catch (Exception e) {
-            // System.out.println("Error loading log4j");
+             //System.out.println("Error loading log4j");
         }
     }
 }
