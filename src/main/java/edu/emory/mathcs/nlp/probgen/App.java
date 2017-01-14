@@ -31,24 +31,50 @@ public class App {
         ResourceObject obama = new ResourceObject(obamaResource);
         ResourceObject abe   = new ResourceObject(abeResource);
 
+
+        Resource nullS = null;
+        Property type = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
+        RDFNode  nullO = null;
+
+        // Get random list of resources, had to use type for memory constraints
+        StmtIterator randomList = dbpediaInfModel.listStatements(nullS, type, nullO);
+
+		int walks = 10;
+		int walksPerResource = 10;
+		int maxSteps = 4;
+
+        //System.out.println("Starts");
+        Set<Resource> startingPoints = new LinkedHashSet<Resource>();
+        while(startingPoints.size() < walks){
+        	Statement st = randomList.next();
+        	Resource start = st.getResource();
+        	startingPoints.add(start);
+        }
+        Resource[] starting = startingPoints.toArray(new Resource[walks]);
+   		for(Resource start: starting){
+   			System.out.println(start.toString());
+   		}
+        //for(Resource reso: startingPoints){ System.out.println(reso.toString()); }
+
         try{
 	        PrintWriter writer = new PrintWriter("randomwalk-output.txt", "UTF-8");
 
+			for(Resource start: starting){
+				ResourceObject startingObj = new ResourceObject(start);
 
-			int maxNumberOfSteps = 4;
-			int iterations = 10;
+				for(int k = 0; k < walksPerResource; k++){
+					// Must reinitialize to restart walk
+					RandomWalk r = new RandomWalk(startingObj);
+					String result = "";
 
-			for(int j = 0; j < iterations; j++){
-				// Must restart walk
-				RandomWalk r = new RandomWalk(obama);
-				String result = "";
+					for(int i = 0; i < maxSteps; i++){
+						result = r.takeStep();
+						if(result.equals("err")){ break; }
+						writer.print(result);
+					}
 
-				for(int i = 0; i < maxNumberOfSteps; i++){
-					result = r.takeStep();
-					if(result.equals("err")){ break; }
-					writer.print(result);
+					writer.println();
 				}
-				writer.println();
 			}
 			writer.close();
 
@@ -118,6 +144,7 @@ class RandomWalk{
 			// Gets a new 'link' from the previous item on the walk
 			previousRandomProperty = previous.getRandomProperty();
 			if(previousRandomProperty == null){
+				//System.out.println("	last resource has no valid properties...");
 				return "err";
 			}
 
@@ -145,11 +172,12 @@ class RandomWalk{
 		Resource resultResource = nextCandidateResourceList.get(new Random().nextInt(nextCandidateResourceList.size()));
 
 		String out = "<\"" + previousResource.toString().replace("http://dbpedia.org/resource/","") + "\", \"" + previousRandomProperty.toString().replace("http://dbpedia.org/ontology/","") + "\", \"" + resultResource.toString().replace("http://dbpedia.org/resource/","") + "\">";
-		System.out.println(out);
+		//System.out.println(out);
 
 		ResourceObject next = new ResourceObject(resultResource);
+		//System.out.println("Made new resource");
 		chain.add(next);
-
+		//System.out.println("Added to chain, returning " + out);
 		// Currently going to only use Resources, soon will use literals
 		return out;
 	}
