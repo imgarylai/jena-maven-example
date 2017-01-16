@@ -23,13 +23,7 @@ public class App {
         inf.makeInferenceModel();
 
 
-        Resource obamaResource = dbpediaInfModel.getResource("http://dbpedia.org/resource/Barack_Obama");
-        Resource abeResource   = dbpediaInfModel.getResource("http://dbpedia.org/resource/Abraham_Lincoln");
-
-        ResourceObject obama = new ResourceObject(obamaResource);
-        ResourceObject abe   = new ResourceObject(abeResource);
-
-
+        //Set search criteria
         Resource nullS = null;
         Property type = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
         RDFNode  nullO = null;
@@ -37,40 +31,49 @@ public class App {
         // Get random list of resources, had to use type for memory constraints
         StmtIterator randomList = dbpediaInfModel.listStatements(nullS, type, nullO);
 
+        // Walk parameters
 		int walks = 10;
 		int walksPerResource = 10;
 		int maxSteps = 4;
 
-        //System.out.println("Starts");
+		// Puts randomList into a set to get uniques only
         Set<Resource> startingPoints = new LinkedHashSet<Resource>();
         while(startingPoints.size() < walks){
         	Statement st = randomList.next();
         	Resource start = st.getResource();
         	startingPoints.add(start);
         }
+
+        // Puts unique list into an array for easier processing
         Resource[] starting = startingPoints.toArray(new Resource[walks]);
    		for(Resource start: starting){
    			System.out.println(start.toString());
    		}
-        //for(Resource reso: startingPoints){ System.out.println(reso.toString()); }
 
+   		// Printer has to be in try-catch
         try{
+        	// designates output file
 	        PrintWriter writer = new PrintWriter("randomwalk-output.txt", "UTF-8");
 
+	        // for every unique resource
 			for(Resource start: starting){
+				//Resource object functionality required for walk
 				ResourceObject startingObj = new ResourceObject(start);
 
+				// take multiple walks from same starting point
 				for(int k = 0; k < walksPerResource; k++){
 					// Must reinitialize to restart walk
 					RandomWalk r = new RandomWalk(startingObj);
 					String result = "";
 
+					// take steps until dead-end or hit max
 					for(int i = 0; i < maxSteps; i++){
 						result = r.takeStep();
 						if(result.equals("err")){ break; }
 						writer.print(result);
 					}
-
+					// need to make only valid walks have a newline
+					// currently have a lot of blanks
 					writer.println();
 				}
 			}
