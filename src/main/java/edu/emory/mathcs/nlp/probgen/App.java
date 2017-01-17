@@ -35,15 +35,14 @@ public class App {
 		// txtNum = Naming for text file
 		// startWalksAt = Begins walk at resource number;
         //---------------------------------------------------------------------------------
-
 		int walks = 100;
 		int walksPerResource = 20;
 		int maxSteps = 4;
 		int minSteps = 4;
 		int anotherPropertyTries = 5;
-
 		int txtNum = 3;
 		int startWalksAt = 211;
+		//---------------------------------------------------------------------------------
 
 		//Set search criteria
         Resource nullS = null;
@@ -73,6 +72,8 @@ public class App {
 
     }
 }
+
+
 
 class Walker{
 	Set<String> toPrint;
@@ -141,6 +142,133 @@ class Walker{
 			wlk = wlk + s;
 		}
 		toPrint.add(wlk);
+	}
+}
+
+
+class InOut{
+	Resource core;
+	ArrayList<SubjectPredicatePair> incoming;
+	ArrayList<PredicateObjectPair> outgoing;
+
+	int incomingLength;
+	int outgoingLength;
+
+	public InOut(Resource r){
+		this.core = r;
+
+		ArrayList<SubjectPredicatePair> inc = new ArrayList<SubjectPredicatePair>();
+		ArrayList<PredicateObjectPair> out = new ArrayList<PredicateObjectPair>();
+
+		inc = getIncoming(core);
+		out = getOutgoing(core);
+
+		this.incoming = inc;
+		this.outgoing = out;
+
+		this.incomingLength = incoming.size();
+		this.outgoingLength = outgoing.size();
+	}
+
+	public int getSizeIncoming(){
+		return incomingLength;
+	}
+	public int getSizeOutgoing(){
+		return outgoingLength;
+	}
+
+	public ArrayList<SubjectPredicatePair> getIncoming(Resource resourceIn){
+    	// incoming
+        Resource s = null;
+        Property p = null;
+        StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
+
+        ArrayList<SubjectPredicatePair> result = new ArrayList<SubjectPredicatePair>();
+
+        while(oi.hasNext()){
+        	Statement statement = oi.nextStatement();
+        	Resource  subject   = statement.getSubject();
+            Property  predicate = statement.getPredicate();
+
+
+            if(checkProperty(predicate.toString()) && checkResource(subject.toString())) {
+            	SubjectPredicatePair pair = new SubjectPredicatePair(subject, predicate);
+            	result.add(pair);
+            }
+        }
+    	return result;
+    }
+
+
+	public ArrayList<PredicateObjectPair> getOutgoing(Resource resourceIn){
+    	// outgoing
+        Property p = null;
+        RDFNode r = null;
+        StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
+
+        ArrayList<PredicateObjectPair> result = new ArrayList<PredicateObjectPair>();
+
+        while (oo.hasNext()){
+            Statement statement = oo.nextStatement();
+            Property  predicate = statement.getPredicate();
+            RDFNode   object    = statement.getObject();
+
+            if(checkProperty(predicate.toString()) && checkResource(object.toString())) {
+            	PredicateObjectPair pair = new PredicateObjectPair(predicate, object.asResource());
+            	result.add(pair);
+            }
+        }
+        return result;
+    }
+
+    public boolean checkResource(String object) {
+        String dbo = "dbpedia.org/resource";
+        Pattern dboPattern = Pattern.compile(dbo);
+        Matcher dboMatcher = dboPattern.matcher(object);
+        return dboMatcher.find();
+    }
+
+    public boolean checkProperty(String object) {
+        String dbo = "dbpedia.org/ontology";
+        Pattern dboPattern = Pattern.compile(dbo);
+        Matcher dboMatcher = dboPattern.matcher(object);
+        return dboMatcher.find();
+    }
+}
+
+
+
+
+class PredicateObjectPair{
+	Property predicate;
+	Resource object;
+	public PredicateObjectPair(Property p, Resource r){
+		this.predicate = p;
+		this.object = r;
+	}
+
+	public Property getPredicate(){
+		return predicate;
+	}
+	public Resource getObject(){
+		return object;
+	}
+}
+
+class SubjectPredicatePair{
+	Resource subject;
+	Property predicate;
+
+	public SubjectPredicatePair(Resource r, Property p){
+		this.subject = r;
+		this.predicate = p;
+	}
+
+	public Resource getSubject(){
+		return subject;
+	}
+	public Property getPredicate(){
+		return predicate;
 	}
 }
 
