@@ -1,3 +1,6 @@
+// Note: All classes are in the same file because its easy to work with over sftp,
+// 		 will reorganize later
+
 package edu.emory.mathcs.nlp.probgen;
 import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
@@ -69,8 +72,30 @@ public class App {
         	counts++;
         }
 
-
         Walker trial = new Walker(startingPoints, walksPerResource, maxSteps, minSteps, anotherPropertyTries, txtNum);
+
+        /*
+			Need to change Walker to be compatible with InOut
+				1. Not just print
+				2. Use the last resource of the random walk as in/out
+        */
+
+		/*
+			For the cloze
+				1. Randomly pick X(4) of the same type
+					eg. <usa, state, ky>
+						1. tn
+						2. hi
+						3. mi
+						4. vt
+
+				2. Then for each of the X(4) 'candidates' (including answer?)
+						1. get both top Y(5) 'pairs' (see classes)
+							* Top determined by 'importance function'
+							  where important == number of incoming &
+							  outgoing connections
+
+		*/
 
     }
 }
@@ -103,6 +128,8 @@ class Walker{
 					printable.add(result);
 				}
 
+				// erase if less than length of minimum steps,
+				// next if will deal with it
 				if(printable.size() < minSteps){
 					printable.clear();
 				}
