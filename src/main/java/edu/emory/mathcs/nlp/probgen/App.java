@@ -37,6 +37,7 @@ public class App {
 		int walks = 10;
 		int walksPerResource = 10;
 		int maxSteps = 4;
+		int anotherPropertyTries = 5;
 
 		// Puts randomList into a set to get uniques only
         Set<Resource> startingPoints = new LinkedHashSet<Resource>();
@@ -46,48 +47,77 @@ public class App {
         	startingPoints.add(start);
         }
 
-        // Puts unique list into an array for easier processing
-        Resource[] starting = startingPoints.toArray(new Resource[walks]);
-   		for(Resource start: starting){
-   			System.out.println(start.toString());
-   		}
 
-   		// Printer has to be in try-catch
-        try{
+        Walker trial = new Walker(startingPoints, walksPerResource, maxSteps, anotherPropertyTries);
+
+    }
+}
+
+class Walker{
+	Set<String> toPrint;
+
+	public Walker(Set<Resource> resources, int walksPerResource, int maxSteps, int anotherPropertyTries){
+		Set<String> tp = new LinkedHashSet<String>();
+		this.toPrint = tp;
+
+		for(Resource start: resources){
+			ResourceObject startingObj = new ResourceObject(start);
+
+			for(int k = 0; k < walksPerResource; k++){
+				RandomWalk r = new RandomWalk(startingObj);
+				ArrayList<String> printable = new ArrayList<String>();
+
+				String result = "";
+
+				// take steps until dead-end or hit max
+				for(int i = 0; i < maxSteps; i++){
+					result = r.takeStep(anotherPropertyTries);
+
+					if(result.equals("err")){
+						break;
+					}
+					printable.add(result);
+				}
+
+				// if its an empty walk, don't print it
+				if(printable.isEmpty()){
+					continue;
+				}
+
+				printOneWalk(printable);
+			}
+		}
+		writeToFile();
+
+	}
+
+	public void writeToFile(){
+		try{
         	// designates output file
 	        PrintWriter writer = new PrintWriter("randomwalk-output.txt", "UTF-8");
 
-	        // for every unique resource
-			for(Resource start: starting){
-				//Resource object functionality required for walk
-				ResourceObject startingObj = new ResourceObject(start);
-
-				// take multiple walks from same starting point
-				for(int k = 0; k < walksPerResource; k++){
-					// Must reinitialize to restart walk
-					RandomWalk r = new RandomWalk(startingObj);
-					String result = "";
-
-					// take steps until dead-end or hit max
-					for(int i = 0; i < maxSteps; i++){
-						result = r.takeStep();
-						if(result.equals("err")){ break; }
-						writer.print(result);
-					}
-					// need to make only valid walks have a newline
-					// currently have a lot of blanks
-					writer.println();
-				}
-			}
-			writer.close();
+	        for(String s: toPrint){
+	        	writer.println(s);
+	        }
+	        writer.close();
 
 		} catch (IOException e){
 			System.out.println(e);
 		}
 
+		System.out.println("Printed " + toPrint.size() + " lines");
+	}
 
-    }
+	public void printOneWalk(ArrayList<String> printable){
+		String wlk = "";
+		for(String s: printable){
+			wlk = wlk + s;
+		}
+		toPrint.add(wlk);
+	}
 }
+
+
 
 class RandomWalk{
 	ResourceObject seed;
@@ -100,30 +130,32 @@ class RandomWalk{
 		this.chain = chain;
 	}
 
-	public String takeStep(){
-		int tryDifferentProperty = 5;
-
-		//System.out.println("taking step...");
+	public String takeStep(int tryAnotherProperty){
 		ResourceObject previous = chain.get(chain.size() - 1);
-
 		Resource previousResource = previous.getOriginalResource();
+
+		ArrayList<Literal> nextCandidateLiteralList = new ArrayList<Literal>();
+		ArrayList<Resource> nextCandidateResourceList = new ArrayList<Resource>();
+
 		Property previousRandomProperty = previous.getRandomProperty();
+
+
+		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		//	Get resource list
+		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 		// if the previousRandomProperty was null, there are no valid
 		// properties to choose from, so walk hit a wall.
 		if(previousRandomProperty == null){
-			//System.out.println("	last resource has no valid properties...");
 			return "err";
 		}
 
 		NodeIterator candidates = dbpediaInfModel.listObjectsOfProperty(previousResource, previousRandomProperty);
 
-		ArrayList<Literal> nextCandidateLiteralList = new ArrayList<Literal>();
-		ArrayList<Resource> nextCandidateResourceList = new ArrayList<Resource>();
-
 		while(candidates.hasNext()){
 			RDFNode node = candidates.next();
 
+			// splits Objects into either literals or resources
 			if(node.isLiteral()){
 				nextCandidateLiteralList.add(node.asLiteral());
 			}
@@ -137,25 +169,25 @@ class RandomWalk{
 			// the candidate resource list is probably empty because
 			// for the verb chosen, the answer was a literal
 
-			//System.out.println("	reroll property, " + previousRandomProperty.toString().replace("http://dbpedia.org/ontology/","") + " didn't link to any resources...");
-
 			// So clear the canditate literals and resources, because
 			// we actually have no resources
 			nextCandidateLiteralList.clear();
 			nextCandidateResourceList.clear();
 
-			// Gets a new 'link' from the previous item on the walk
+			// Gets a new path from the previous item on the walk
 			previousRandomProperty = previous.getRandomProperty();
+
+			//if no valid properties to choose from, unable to continue
 			if(previousRandomProperty == null){
-				//System.out.println("	last resource has no valid properties...");
 				return "err";
 			}
 
-
 			NodeIterator newCandidates = dbpediaInfModel.listObjectsOfProperty(previousResource, previousRandomProperty);
+
 			while(newCandidates.hasNext()){
 				RDFNode newNode = newCandidates.next();
 
+				// splits Objects into either literals or resources
 				if(newNode.isLiteral()){
 					nextCandidateLiteralList.add(newNode.asLiteral());
 				}
@@ -164,24 +196,24 @@ class RandomWalk{
 				}
 			}
 
+			// set number of attempts, may hit inf loop
 			attempt++;
-			if(attempt > tryDifferentProperty){
+			if(attempt > tryAnotherProperty){
 				return "err";
 			}
-
 		}
+		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
 
 
 		Resource resultResource = nextCandidateResourceList.get(new Random().nextInt(nextCandidateResourceList.size()));
 
 		String out = "<\"" + previousResource.toString().replace("http://dbpedia.org/resource/","") + "\", \"" + previousRandomProperty.toString().replace("http://dbpedia.org/ontology/","") + "\", \"" + resultResource.toString().replace("http://dbpedia.org/resource/","") + "\">";
-		//System.out.println(out);
 
 		ResourceObject next = new ResourceObject(resultResource);
-		//System.out.println("Made new resource");
 		chain.add(next);
-		//System.out.println("Added to chain, returning " + out);
-		// Currently going to only use Resources, soon will use literals
+
 		return out;
 	}
 }
