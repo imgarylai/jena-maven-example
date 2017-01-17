@@ -18,14 +18,36 @@ public class App {
 
     public static void main(String[] args) {
         //System.out.println("Starting!");
-
         LoadLogger logger = new LoadLogger();
         logger.loadLogger();
         InferenceModel inf = new InferenceModel();
         inf.makeInferenceModel();
 
 
-        //Set search criteria
+        // Walk parameters
+        //---------------------------------------------------------------------------------
+        // Note: The randomList is the same order every time, so can batch jobs to start
+        //		 where the last one left off.
+        //
+        // walks = Unique number of resources to begin walks at
+		// walksPerResource = Do this many walks per unique resource
+		// maxSteps = Number of steps to take per walk (Step = subject,predicate,object)
+		// minSteps = Minimum steps required to save a chain
+		// anotherPropertyTries = Retries another random property if next step is not valid
+		// txtNum = Naming for text file
+		// startWalksAt = Begins walk at resource number;
+        //---------------------------------------------------------------------------------
+
+		int walks = 100;
+		int walksPerResource = 20;
+		int maxSteps = 4;
+		int minSteps = 4;
+		int anotherPropertyTries = 5;
+
+		int txtNum = 3;
+		int startWalksAt = 211;
+
+		//Set search criteria
         Resource nullS = null;
         Property type = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
         RDFNode  nullO = null;
@@ -33,22 +55,23 @@ public class App {
         // Get random list of resources, had to use type for memory constraints
         StmtIterator randomList = dbpediaInfModel.listStatements(nullS, type, nullO);
 
-        // Walk parameters
-		int walks = 10;
-		int walksPerResource = 10;
-		int maxSteps = 4;
-		int anotherPropertyTries = 5;
 
 		// Puts randomList into a set to get uniques only
         Set<Resource> startingPoints = new LinkedHashSet<Resource>();
+        int counts = 1;
         while(startingPoints.size() < walks){
         	Statement st = randomList.next();
+        	if(startWalksAt > counts){
+        		counts++;
+        		continue;
+        	}
         	Resource start = st.getResource();
         	startingPoints.add(start);
+        	counts++;
         }
 
 
-        Walker trial = new Walker(startingPoints, walksPerResource, maxSteps, anotherPropertyTries);
+        Walker trial = new Walker(startingPoints, walksPerResource, maxSteps, minSteps, anotherPropertyTries, txtNum);
 
     }
 }
@@ -56,7 +79,7 @@ public class App {
 class Walker{
 	Set<String> toPrint;
 
-	public Walker(Set<Resource> resources, int walksPerResource, int maxSteps, int anotherPropertyTries){
+	public Walker(Set<Resource> resources, int walksPerResource, int maxSteps, int minSteps, int anotherPropertyTries, int txtNum){
 		Set<String> tp = new LinkedHashSet<String>();
 		this.toPrint = tp;
 
@@ -79,6 +102,10 @@ class Walker{
 					printable.add(result);
 				}
 
+				if(printable.size() < minSteps){
+					printable.clear();
+				}
+
 				// if its an empty walk, don't print it
 				if(printable.isEmpty()){
 					continue;
@@ -87,14 +114,16 @@ class Walker{
 				printOneWalk(printable);
 			}
 		}
-		writeToFile();
+		// This is going to have to probably be altered once there is a big enough list
+		writeToFile(txtNum);
 
 	}
 
-	public void writeToFile(){
+	// This is going to have to probably be altered once there is a big enough list
+	public void writeToFile(int txtNum){
 		try{
         	// designates output file
-	        PrintWriter writer = new PrintWriter("randomwalk-output.txt", "UTF-8");
+	        PrintWriter writer = new PrintWriter("randomwalk-output" + txtNum + ".txt", "UTF-8");
 
 	        for(String s: toPrint){
 	        	writer.println(s);
@@ -203,9 +232,6 @@ class RandomWalk{
 			}
 		}
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-
 
 		Resource resultResource = nextCandidateResourceList.get(new Random().nextInt(nextCandidateResourceList.size()));
 
