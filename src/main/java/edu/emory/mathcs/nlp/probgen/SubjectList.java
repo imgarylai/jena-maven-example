@@ -1,17 +1,26 @@
 package edu.emory.mathcs.nlp.probgen;
 
-import org.apache.jena.rdf.model.InfModel;
-import org.apache.jena.rdf.model.Model;
+
+import org.apache.jena.base.Sys;
+import org.apache.jena.rdf.model.*;
+
+import java.io.*;
+
 import java.util.List;
-import java.io.PrintWriter;
-import java.io.IOException;
+import java.util.ArrayList;
+
+
+
 
 public class SubjectList{
-	public static void makeSubjectList(InfModel dbpediaInfModel){
+	public void makeSubjectList(InfModel dbpediaInfModel){
 		ResIterator subjectList = dbpediaInfModel.listSubjects();
+		System.out.println("Subject list loaded");
 
 		int resourceCount = 0;
 		int fileindex = 0;
+
+		ArrayList<Resource> towrite = new ArrayList<Resource>();
 
 		//because of IO
 		try{
@@ -24,7 +33,7 @@ public class SubjectList{
 				}
 
 				// should be 47 files of 100,000
-				if (resourceCount % 100000 = 0){
+				if (resourceCount % 100000 == 0){
 					// serialize arraylist
 					WriteArrayList wal = new WriteArrayList(towrite);
 
@@ -57,7 +66,7 @@ public class SubjectList{
 
 class WriteArrayList implements Serializable{
 	ArrayList<Resource> resourcesToWrite;
-	public void setArrayList(ArrayList<Resource> resourceList){
+	public WriteArrayList(ArrayList<Resource> resourceList){
 		this.resourcesToWrite = resourceList;
 	}
 }
