@@ -17,66 +17,39 @@ import static edu.emory.mathcs.nlp.probgen.InferenceModel.dbpediaInfModel;
 
 public class App {
 
-    public static void main(String[] args) {
-        //System.out.println("Starting!");
-        LoadLogger logger = new LoadLogger();
-        logger.loadLogger();
-        InferenceModel inf = new InferenceModel();
-        inf.makeInferenceModel();
+	public static void main(String[] args) {
+		//System.out.println("Starting!");
+		LoadLogger logger = new LoadLogger();
+		logger.loadLogger();
+		InferenceModel inf = new InferenceModel();
+		inf.makeInferenceModel();
 
 
-        // Walk parameters
-        //---------------------------------------------------------------------------------
-        // Note: The randomList is the same order every time, so can batch jobs to start
-        //		 where the last one left off.
-        //
-        // walks = Unique number of resources to begin walks at
-		// walksPerResource = Do this many walks per unique resource
-		// maxSteps = Number of steps to take per walk (Step = subject,predicate,object)
-		// minSteps = Minimum steps required to save a chain
-		// anotherPropertyTries = Retries another random property if next step is not valid
-		// txtNum = Naming for text file
-		// startWalksAt = Begins walk at resource number;
-        //---------------------------------------------------------------------------------
-		int walks = 100;
-		int walksPerResource = 20;
-		int maxSteps = 4;
-		int minSteps = 4;
-		int anotherPropertyTries = 5;
-		int txtNum = 3;
-		int startWalksAt = 211;
+		// Walk parameters
+		//---------------------------------------------------------------------------------
+		int walks = 10;					//Unique number of resources to begin walks at
+		int walksPerResource = 10;		//Do this many walks per unique resource
+		int maxSteps = 4;				//Number of steps to take per walk (Step = subject,predicate,object)
+		int minSteps = 4;				//Minimum steps required to save a chain
+		int anotherPropertyTries = 5;	//Retries another random property if next step is not valid
+		int txtNum = 3;					//Naming for text file
+		int startWalksAt = 2;			//Begins walk at resource number __ in the subject list
 		//---------------------------------------------------------------------------------
 
-		//Set search criteria
-        Resource nullS = null;
-        Property type = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
-        RDFNode  nullO = null;
 
-        // Get random list of resources, had to use type for memory constraints
-        StmtIterator randomList = dbpediaInfModel.listStatements(nullS, type, nullO);
+		//Need to get batched subjects from the subject list
+
+		//Need to create another program to do the Importance function,
+		// based off the InOut code obviously.
 
 
-		// Puts randomList into a set to get uniques only
-        Set<Resource> startingPoints = new LinkedHashSet<Resource>();
-        int counts = 1;
-        while(startingPoints.size() < walks){
-        	Statement st = randomList.next();
-        	if(startWalksAt > counts){
-        		counts++;
-        		continue;
-        	}
-        	Resource start = st.getResource();
-        	startingPoints.add(start);
-        	counts++;
-        }
+		//Walker trial = new Walker(startingPoints, walksPerResource, maxSteps, minSteps, anotherPropertyTries, txtNum);
 
-        Walker trial = new Walker(startingPoints, walksPerResource, maxSteps, minSteps, anotherPropertyTries, txtNum);
-
-        /*
+		/*
 			Need to change Walker to be compatible with InOut
 				1. Not just print
 				2. Use the last resource of the random walk as in/out
-        */
+		*/
 
 		/*
 			For the cloze
@@ -95,7 +68,7 @@ public class App {
 
 		*/
 
-    }
+	}
 }
 
 
@@ -107,11 +80,15 @@ class Walker{
 		Set<String> tp = new LinkedHashSet<String>();
 		this.toPrint = tp;
 
-		for(Resource start: resources){
+		for(Resource start : resources){
+			System.out.println("Start RESOURCEOBJ");
 			ResourceObject startingObj = new ResourceObject(start);
+			System.out.println("End RESOURCEOBJ");
 
 			for(int k = 0; k < walksPerResource; k++){
 				RandomWalk r = new RandomWalk(startingObj);
+				System.out.println("End RANDOMWALK");
+
 				ArrayList<String> printable = new ArrayList<String>();
 
 				String result = "";
@@ -124,6 +101,7 @@ class Walker{
 						break;
 					}
 					printable.add(result);
+					System.out.println(result);
 				}
 
 				// erase if less than length of minimum steps,
@@ -132,10 +110,7 @@ class Walker{
 					printable.clear();
 				}
 
-				// if its an empty walk, don't print it
-				if(printable.isEmpty()){
-					continue;
-				}
+				System.out.println("One walk completed");
 
 				printOneWalk(printable);
 			}
@@ -148,13 +123,13 @@ class Walker{
 	// This is going to have to probably be altered once there is a big enough list
 	public void writeToFile(int txtNum){
 		try{
-        	// designates output file
-	        PrintWriter writer = new PrintWriter("randomwalk-output" + txtNum + ".txt", "UTF-8");
+			// designates output file
+			PrintWriter writer = new PrintWriter("randomwalk-output" + txtNum + ".txt", "UTF-8");
 
-	        for(String s: toPrint){
-	        	writer.println(s);
-	        }
-	        writer.close();
+			for(String s: toPrint){
+				writer.println(s);
+			}
+			writer.close();
 
 		} catch (IOException e){
 			System.out.println(e);
@@ -205,62 +180,62 @@ class InOut{
 	}
 
 	public ArrayList<SubjectPredicatePair> getIncoming(Resource resourceIn){
-    	// incoming
-        Resource s = null;
-        Property p = null;
-        StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
+		// incoming
+		Resource s = null;
+		Property p = null;
+		StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
 
-        ArrayList<SubjectPredicatePair> result = new ArrayList<SubjectPredicatePair>();
+		ArrayList<SubjectPredicatePair> result = new ArrayList<SubjectPredicatePair>();
 
-        while(oi.hasNext()){
-        	Statement statement = oi.nextStatement();
-        	Resource  subject   = statement.getSubject();
-            Property  predicate = statement.getPredicate();
+		while(oi.hasNext()){
+			Statement statement = oi.nextStatement();
+			Resource  subject   = statement.getSubject();
+			Property  predicate = statement.getPredicate();
 
 
-            if(checkProperty(predicate.toString()) && checkResource(subject.toString())) {
-            	SubjectPredicatePair pair = new SubjectPredicatePair(subject, predicate);
-            	result.add(pair);
-            }
-        }
-    	return result;
-    }
+			if(checkProperty(predicate.toString()) && checkResource(subject.toString())) {
+				SubjectPredicatePair pair = new SubjectPredicatePair(subject, predicate);
+				result.add(pair);
+			}
+		}
+		return result;
+	}
 
 
 	public ArrayList<PredicateObjectPair> getOutgoing(Resource resourceIn){
-    	// outgoing
-        Property p = null;
-        RDFNode r = null;
-        StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
+		// outgoing
+		Property p = null;
+		RDFNode r = null;
+		StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
 
-        ArrayList<PredicateObjectPair> result = new ArrayList<PredicateObjectPair>();
+		ArrayList<PredicateObjectPair> result = new ArrayList<PredicateObjectPair>();
 
-        while (oo.hasNext()){
-            Statement statement = oo.nextStatement();
-            Property  predicate = statement.getPredicate();
-            RDFNode   object    = statement.getObject();
+		while (oo.hasNext()){
+			Statement statement = oo.nextStatement();
+			Property  predicate = statement.getPredicate();
+			RDFNode   object    = statement.getObject();
 
-            if(checkProperty(predicate.toString()) && checkResource(object.toString())) {
-            	PredicateObjectPair pair = new PredicateObjectPair(predicate, object.asResource());
-            	result.add(pair);
-            }
-        }
-        return result;
-    }
+			if(checkProperty(predicate.toString()) && checkResource(object.toString())) {
+				PredicateObjectPair pair = new PredicateObjectPair(predicate, object.asResource());
+				result.add(pair);
+			}
+		}
+		return result;
+	}
 
-    public boolean checkResource(String object) {
-        String dbo = "dbpedia.org/resource";
-        Pattern dboPattern = Pattern.compile(dbo);
-        Matcher dboMatcher = dboPattern.matcher(object);
-        return dboMatcher.find();
-    }
+	public boolean checkResource(String object) {
+		String dbo = "dbpedia.org/resource";
+		Pattern dboPattern = Pattern.compile(dbo);
+		Matcher dboMatcher = dboPattern.matcher(object);
+		return dboMatcher.find();
+	}
 
-    public boolean checkProperty(String object) {
-        String dbo = "dbpedia.org/ontology";
-        Pattern dboPattern = Pattern.compile(dbo);
-        Matcher dboMatcher = dboPattern.matcher(object);
-        return dboMatcher.find();
-    }
+	public boolean checkProperty(String object) {
+		String dbo = "dbpedia.org/ontology";
+		Pattern dboPattern = Pattern.compile(dbo);
+		Matcher dboMatcher = dboPattern.matcher(object);
+		return dboMatcher.find();
+	}
 }
 
 
@@ -406,7 +381,10 @@ class ResourceObject{
 	public ResourceObject(Resource r){
 		this.resource = r;
 		this.typeList = getResourceTypeList(r);
+		System.out.println("End GETRESOURCETYPELIST R");
 		this.propertyList = getResourcePropertyList(r);
+		System.out.println("End GETRESOURCEPROPLIST R");
+
 	}
 
 	public Resource getOriginalResource(){
@@ -442,14 +420,14 @@ class ResourceObject{
 	public void printResourceTypeList(){
 		System.out.println(resource.toString() + " types:");
 		for(Resource r : typeList){
-        	System.out.println("	" + r);
-        }
+			System.out.println("	" + r);
+		}
 	}
 	public void printPropertyList(){
 		System.out.println(resource.toString() + " properties:");
-        for (Property p: propertyList) {
-            System.out.println("	" + p);
-        }
+		for (Property p: propertyList) {
+			System.out.println("	" + p);
+		}
 	}
 	public void printBoth(){
 		printResourceTypeList();
@@ -462,70 +440,93 @@ class ResourceObject{
 
 	// Resources
 	private ArrayList getResourceTypeList(Resource r) {
-        ArrayList<Resource> resourceArray = new ArrayList<Resource>();
-        StmtIterator rIter = r.listProperties();
-        while (rIter.hasNext()){
-            Statement statement = rIter.nextStatement();
-            //Resource  subject   = statement.getSubject();       // get the subject
-            Property  predicate = statement.getPredicate();     // get the predicate
-            RDFNode   object    = statement.getObject();        // get the object
+		ArrayList<Resource> resourceArray = new ArrayList<Resource>();
+		System.out.println(r.toString());
+		System.out.println("Start LISTPROPS");
+		List<Statement> statements = r.listProperties().toList();
+		System.out.println("End LISTPROPS");
 
-            if (checkType(predicate.toString()) && checkDBO(object.toString()) && object instanceof Resource) {
-                if(object.isResource()){
-                	resourceArray.add(object.asResource());
-                }
-            }
-        }
-        ArrayList<Resource> resourceArrayND = removeDuplicateResources(resourceArray);
+		for (Statement statement : statements) {
+			// System.out.println("Start statement");
 
-        return resourceArrayND;
-    }
+			// Statement statement = rIter.nextStatement();
+			// System.out.println("End statement");
 
-    private ArrayList removeDuplicateResources(ArrayList<Resource> resourceList){
-    	Set<Resource> hs = new LinkedHashSet<Resource>();
-    	hs.addAll(resourceList);
-    	resourceList.clear();
-    	resourceList.addAll(hs);
-    	return resourceList;
-    }
+			//Resource  subject   = statement.getSubject();       // get the subject
+			Property  predicate = statement.getPredicate();     // get the predicate
+			System.out.println("End predicate");
 
-    // Properties
-    private ArrayList getResourcePropertyList(Resource r) {
-        ArrayList<Property> propertyArray = new ArrayList<Property>();
-        StmtIterator oIter = r.listProperties();
-        while (oIter.hasNext()){
-            Statement statement = oIter.nextStatement();
-            Property  predicate = statement.getPredicate();     // get the predicate
+			RDFNode   object    = statement.getObject();        // get the object
+			System.out.println("End object");
+			/*
+			if (object.isResource() && predicate.contains("#type") && object.contains("dbpedia.org/ontology")) {
 
-            if (checkDBO(predicate.toString())) {
-                propertyArray.add(predicate);
-            }
-        }
-        ArrayList<Property> propertyArrayND = removeDuplicateProperties(propertyArray);
 
-        return propertyArrayND;
-    }
+			if (object.isResource() && checkType(predicate.toString()) && checkDBO(object.toString())) {
+				Resource resourceObject = object.asResource();
+				System.out.println("End resourceObject");
+				resourceArray.add(resourceObject);
+				System.out.println("End Add");
+			}
+			*/
+		}
+		System.out.println("End Loop");
+		ArrayList<Resource> resourceArrayND = removeDuplicateResources(resourceArray);
+		System.out.println("End removeDuplicateResources");
 
-    private ArrayList removeDuplicateProperties(ArrayList<Property> propertyList){
-    	Set<Property> hs = new LinkedHashSet<Property>();
-    	hs.addAll(propertyList);
-    	propertyList.clear();
-    	propertyList.addAll(hs);
-    	return propertyList;
-    }
+		return resourceArrayND;
+	}
 
-    // Checkers
-    public static boolean checkType(String predicate) {
-        String type = "#type";
-        Pattern typePattern = Pattern.compile(type);
-        Matcher typeMatcher = typePattern.matcher(predicate);
-        return typeMatcher.find();
-    }
+	private ArrayList removeDuplicateResources(ArrayList<Resource> resourceList){
+		System.out.println("Size " + resourceList.size());
+		Set<Resource> hs = new LinkedHashSet<Resource>();
+		System.out.println("End LinkedHashSet");
+		hs.addAll(resourceList);
+		System.out.println("End hs.addAll");
+		resourceList.clear();
+		System.out.println("End clear");
+		resourceList.addAll(hs);
+		System.out.println("End resourceList.addAll");
+		return resourceList;
+	}
 
-    public static boolean checkDBO(String object) {
-        String dbo = "dbpedia.org/ontology";
-        Pattern dboPattern = Pattern.compile(dbo);
-        Matcher dboMatcher = dboPattern.matcher(object);
-        return dboMatcher.find();
-    }
+	// Properties
+	private ArrayList getResourcePropertyList(Resource r) {
+		ArrayList<Property> propertyArray = new ArrayList<Property>();
+		StmtIterator oIter = r.listProperties();
+		while (oIter.hasNext()){
+			Statement statement = oIter.nextStatement();
+			Property  predicate = statement.getPredicate();     // get the predicate
+
+			if (checkDBO(predicate.toString())) {
+				propertyArray.add(predicate);
+			}
+		}
+		ArrayList<Property> propertyArrayND = removeDuplicateProperties(propertyArray);
+
+		return propertyArrayND;
+	}
+
+	private ArrayList removeDuplicateProperties(ArrayList<Property> propertyList){
+		Set<Property> hs = new LinkedHashSet<Property>();
+		hs.addAll(propertyList);
+		propertyList.clear();
+		propertyList.addAll(hs);
+		return propertyList;
+	}
+
+	// Checkers
+	public static boolean checkType(String predicate) {
+		String type = "#type";
+		Pattern typePattern = Pattern.compile(type);
+		Matcher typeMatcher = typePattern.matcher(predicate);
+		return typeMatcher.find();
+	}
+
+	public static boolean checkDBO(String object) {
+		String dbo = "dbpedia.org/ontology";
+		Pattern dboPattern = Pattern.compile(dbo);
+		Matcher dboMatcher = dboPattern.matcher(object);
+		return dboMatcher.find();
+	}
 }
