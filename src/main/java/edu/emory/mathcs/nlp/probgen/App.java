@@ -38,6 +38,7 @@ public class App {
 		int startWalksAt = 2;			//Begins walk at resource number __ in the subject list
 		//---------------------------------------------------------------------------------
 
+		SubjectList writer = new SubjectList(dbpediaInfModel);
 
 		//Need to get batched subjects from the subject list
 
