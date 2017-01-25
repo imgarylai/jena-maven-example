@@ -2,6 +2,8 @@
 // 		 will reorganize later
 
 package edu.emory.mathcs.nlp.probgen;
+
+import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
 
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ public class App {
 		int startWalksAt = 2;			//Begins walk at resource number __ in the subject list
 		//---------------------------------------------------------------------------------
 
+		SubjectList writer = new SubjectList();
+		writer.makeSubjectList(dbpediaInfModel);
 
 		//Need to get batched subjects from the subject list
 

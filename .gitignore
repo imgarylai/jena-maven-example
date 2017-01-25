@@ -14,3 +14,5 @@ buildNumber.properties
 installlog.txt
 randomwalk-output.txt
 *.txt
+old-walk-outputs/
+subjectResourceFiles/
