@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Running Jena Program"
-export MAVEN_OPTS="-Xmx3000000m -XX:+UseConcMarkSweepGC"
+export MAVEN_OPTS="-Xmx150g -XX:+UseConcMarkSweepGC"
 
 mvn -T48 clean install > installlog.txt
 
