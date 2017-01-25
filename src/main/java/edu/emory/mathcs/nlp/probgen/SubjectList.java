@@ -38,7 +38,7 @@ public class SubjectList{
 					WriteArrayList wal = new WriteArrayList(towrite);
 
 					// write file
-					File file = new File("../../../../../../../../subjectResourceFiles/"+fileindex+".txt");
+					File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileindex+".txt");
 
 					// output streams
 					FileOutputStream fos = new FileOutputStream(file);
