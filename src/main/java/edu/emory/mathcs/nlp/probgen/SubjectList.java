@@ -67,7 +67,9 @@ public class SubjectList{
 
 
 
-	public void loadSubjectList(int fileNumber){
+	public ArrayList<Resource> loadSubjectList(int fileNumber){
+
+		ArrayList<Resource> output = new ArrayList<Resource>();
  		try{
  			File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileNumber+".txt");
 			FileInputStream fis = new FileInputStream(file);
@@ -82,17 +84,22 @@ public class SubjectList{
 			int count = 0;
 			while(subjectList.hasNext()){
 				Resource r = subjectList.nextResource();
+				output.add(r);
 				count++;
 
+				/*
 				if(count % 1000 == 0){
 					System.out.println(r.toString());
 				}
+				*/
 			}
-			System.out.println(count);
+			System.out.println(count + " subjects loaded from " + fileNumber + ".txt");
 		}
 
 		catch (Exception e){
 			System.out.println(e);
 		}
+
+		return output;
 	}
 }

@@ -45,8 +45,9 @@ public class App {
 		//writer.makeSubjectList(dbpediaInfModel);
 
 		SubjectList reader = new SubjectList();
-		reader.loadSubjectList(0);
+		ArrayList<Resource> zero = reader.loadSubjectList(0);
 
+		System.out.println("File 0.txt is size: " + zero.size());
 		//Need to get batched subjects from the subject list
 
 		//Need to create another program to do the Importance function,
