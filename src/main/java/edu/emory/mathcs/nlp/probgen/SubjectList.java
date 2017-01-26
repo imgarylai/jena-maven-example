@@ -14,103 +14,54 @@ import java.util.ArrayList;
 
 public class SubjectList{
 	public void makeSubjectList(InfModel dbpediaInfModel){
-		Resource nullS = null;
-		Property nullP = null;
-        Property type = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
-        RDFNode  nullO = null;
 
-        // Get random list of resources, had to use type for memory constraints
-		StmtIterator randomList = dbpediaInfModel.listStatements(nullS, type, nullO);
+		ResIterator subjectList = dbpediaInfModel.listSubjects();
+		System.out.println("Subject list loaded");
+
+		Resource o = dbpediaInfModel.getResource("http://dbpedia.org/resource/Barack_Obama");
+		Property p = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
+
 		ArrayList<Statement> towrite = new ArrayList<Statement>();
 
 		int resourceCount = 0;
 		int fileindex = 0;
 
-		Resource o = dbpediaInfModel.getResource("http://dbpedia.org/resource/Barack_Obama");
-		Property p = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
 
-		while(randomList.hasNext()){
-			Statement s = randomList.nextStatement();
-			Resource r  = s.getResource();
 
-			//Needs to be a full statement to be added to the model
+		while(subjectList.hasNext()){
+			Resource r = subjectList.nextResource();
+
+			//Needs to be a full statement to be added to the model.
+			//    so has dummy predicate & object
 			Statement justResource = ResourceFactory.createStatement(r, p, o);
 			towrite.add(justResource);
 
+			if(towrite.size() > 100000){
+				writeOut(towrite, fileindex);
 
-			if(towrite.size() > 100){
-				try{
-					Model writeModel = ModelFactory.createDefaultModel();
-					writeModel.add(towrite);
-
-					File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileindex+".txt");
-					FileOutputStream fos = new FileOutputStream(file);
-
-					writeModel.write(fos);
-
-					fos.close();
-
-					//clear arraylist for next 100,000
-					towrite.clear();
-					fileindex++;
-				}
-				catch (IOException e){
-					System.out.println(e);
-				}
-			}
-
-			if(fileindex > 9){
-				return;
+				//clear arraylist for next 100,000
+				towrite.clear();
+				fileindex++;
 			}
 		}
-		/*
-		ResIterator subjectList = dbpediaInfModel.listSubjects();
-		System.out.println("Subject list loaded");
+		// the last one that will be less than 100,000
+		writeOut(towrite, fileindex);
+	}
 
-		int resourceCount = 0;
-		int fileindex = 0;
-
-		ArrayList<Resource> towrite = new ArrayList<Resource>();
-
-		//because of IO
+	private void writeOut(ArrayList<Statement> towrite, int fileindex){
 		try{
-			while (subjectList.hasNext()){
-				resourceCount++;
-				towrite.add(subjectList.next());
+			Model writeModel = ModelFactory.createDefaultModel();
+			writeModel.add(towrite);
 
-				if (resourceCount % 1000 == 0) {
-					System.out.println(resourceCount);
-				}
+			File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileindex+".txt");
+			FileOutputStream fos = new FileOutputStream(file);
 
-				// should be 47 files of 100,000
-				if (resourceCount % 100000 == 0){
-					// serialize arraylist
-					WriteArrayList wal = new WriteArrayList(towrite);
+			writeModel.write(fos);
 
-					// write file
-					File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileindex+".txt");
-
-					// output streams
-					FileOutputStream fos = new FileOutputStream(file);
-					ObjectOutputStream oos = new ObjectOutputStream(fos);
-
-					oos.writeObject(wal);
-
-					oos.close();
-					fos.close();
-
-					//clear arraylist for next 100,000
-					towrite.clear();
-					fileindex++;
-				}
-			}
-
-
-		} catch (IOException e){
+			fos.close();
+		}
+		catch (IOException e){
 			System.out.println(e);
 		}
-
-		System.out.println(resourceCount);
-		*/
 	}
 }
