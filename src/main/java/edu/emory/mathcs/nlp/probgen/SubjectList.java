@@ -14,6 +14,56 @@ import java.util.ArrayList;
 
 public class SubjectList{
 	public void makeSubjectList(InfModel dbpediaInfModel){
+		Resource nullS = null;
+		Property nullP = null;
+        Property type = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
+        RDFNode  nullO = null;
+
+        // Get random list of resources, had to use type for memory constraints
+		StmtIterator randomList = dbpediaInfModel.listStatements(nullS, type, nullO);
+		ArrayList<Statement> towrite = new ArrayList<Statement>();
+
+		int resourceCount = 0;
+		int fileindex = 0;
+
+		Resource o = dbpediaInfModel.getResource("http://dbpedia.org/resource/Barack_Obama");
+		Property p = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
+
+		while(randomList.hasNext()){
+			Statement s = randomList.nextStatement();
+			Resource r  = s.getResource();
+
+			//Needs to be a full statement to be added to the model
+			Statement justResource = ResourceFactory.createStatement(r, p, o);
+			towrite.add(justResource);
+
+
+			if(towrite.size() > 100){
+				try{
+					Model writeModel = ModelFactory.createDefaultModel();
+					writeModel.add(towrite);
+
+					File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileindex+".txt");
+					FileOutputStream fos = new FileOutputStream(file);
+
+					writeModel.write(fos);
+
+					fos.close();
+
+					//clear arraylist for next 100,000
+					towrite.clear();
+					fileindex++;
+				}
+				catch (IOException e){
+					System.out.println(e);
+				}
+			}
+
+			if(fileindex > 9){
+				return;
+			}
+		}
+		/*
 		ResIterator subjectList = dbpediaInfModel.listSubjects();
 		System.out.println("Subject list loaded");
 
@@ -61,22 +111,6 @@ public class SubjectList{
 		}
 
 		System.out.println(resourceCount);
+		*/
 	}
 }
-
-class WriteArrayList implements Serializable{
-	ArrayList<Resource> resourcesToWrite;
-	public WriteArrayList(ArrayList<Resource> resourceList){
-		this.resourcesToWrite = resourceList;
-	}
-}
-
-/*
-	Reading:
-
-	FileInputStream fis = new FileInputStream("t.tmp");
-	ObjectInputStream ois = new ObjectInputStream(fis);
-	List<Club> clubs = (List<Club>) ois.readObject();
-	ois.close();
-
-*/
