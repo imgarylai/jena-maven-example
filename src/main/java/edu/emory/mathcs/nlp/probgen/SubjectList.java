@@ -64,4 +64,35 @@ public class SubjectList{
 			System.out.println(e);
 		}
 	}
+
+
+
+	public void loadSubjectList(int fileNumber){
+ 		try{
+ 			File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileNumber+".txt");
+			FileInputStream fis = new FileInputStream(file);
+
+			Model readModel = ModelFactory.createDefaultModel();
+
+			String n = null;
+			readModel.read(fis, n);
+
+			ResIterator subjectList = readModel.listSubjects();
+
+			int count = 0;
+			while(subjectList.hasNext()){
+				Resource r = subjectList.nextResource();
+				count++;
+
+				if(count % 1000 == 0){
+					System.out.println(r.toString());
+				}
+			}
+			System.out.println(count);
+		}
+
+		catch (Exception e){
+			System.out.println(e);
+		}
+	}
 }

@@ -22,11 +22,13 @@ public class App {
 
 	public static void main(String[] args) {
 		//System.out.println("Starting!");
+
+		/*
 		LoadLogger logger = new LoadLogger();
 		logger.loadLogger();
 		InferenceModel inf = new InferenceModel();
 		inf.makeInferenceModel();
-
+		*/
 
 		// Walk parameters
 		//---------------------------------------------------------------------------------
@@ -39,8 +41,11 @@ public class App {
 		int startWalksAt = 2;			//Begins walk at resource number __ in the subject list
 		//---------------------------------------------------------------------------------
 
-		SubjectList writer = new SubjectList();
-		writer.makeSubjectList(dbpediaInfModel);
+		//SubjectList writer = new SubjectList();
+		//writer.makeSubjectList(dbpediaInfModel);
+
+		SubjectList reader = new SubjectList();
+		reader.loadSubjectList(0);
 
 		//Need to get batched subjects from the subject list
 
