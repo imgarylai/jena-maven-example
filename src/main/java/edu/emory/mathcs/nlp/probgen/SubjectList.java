@@ -67,11 +67,11 @@ public class SubjectList{
 
 
 
-	public ArrayList<Resource> loadSubjectList(int fileNumber){
+	public ArrayList<Resource> loadSubjectList(int fileindex){
 
 		ArrayList<Resource> output = new ArrayList<Resource>();
  		try{
- 			File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileNumber+".txt");
+ 			File file = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectResourceFiles/"+fileindex+".txt");
 			FileInputStream fis = new FileInputStream(file);
 
 			Model readModel = ModelFactory.createDefaultModel();
@@ -93,7 +93,7 @@ public class SubjectList{
 				}
 				*/
 			}
-			System.out.println(count + " subjects loaded from " + fileNumber + ".txt");
+			System.out.println(count + " subjects loaded from " + fileindex + ".txt");
 		}
 
 		catch (Exception e){
