@@ -16,3 +16,4 @@ randomwalk-output.txt
 *.txt
 old-walk-outputs/
 subjectResourceFiles/
+subjectInOutHashes/

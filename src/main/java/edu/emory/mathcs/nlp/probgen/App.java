@@ -14,8 +14,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Random;
 import java.util.*;
+
 import java.io.PrintWriter;
 import java.io.IOException;
+import java.io.*;
 
 import static edu.emory.mathcs.nlp.probgen.InferenceModel.dbpediaInfModel;
 
@@ -46,7 +48,9 @@ public class App {
 		//writer.makeSubjectList(dbpediaInfModel);
 
 		SubjectList reader = new SubjectList();
-		ArrayList<Resource> zero = reader.loadSubjectList(0);
+
+		int fileindex = 0;
+		ArrayList<Resource> zero = reader.loadSubjectList(fileindex);
 
 		System.out.println("File 0.txt is size: " + zero.size());
 
@@ -59,15 +63,47 @@ public class App {
 			InOut x_io = new InOut(x);
 
 			incoming.put(x, x_io.getIncoming());
-			//outgoing.put(x, x_io.getOutgoing());
+			outgoing.put(x, x_io.getOutgoing());
 
 			count++;
 
-			if(count > 100){
+			if(count > 1){
 				break;
 			}
 		}
 
+		//Save incoming file
+		try{
+			File fileIncoming = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectInOutHashes/"+fileindex+"-incoming.txt");
+
+			FileOutputStream fos = new FileOutputStream(fileIncoming);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(incoming);
+			oos.close();
+			fos.close();
+			System.out.println("Incoming map for "+ fileindex + " saved");
+		}
+		catch(IOException ioe){
+			System.out.println(ioe);
+		}
+
+		//Save outgoing file
+		try{
+			File fileOutgoing = new File("/home/wkelly3/jena-projects/jena-maven-example/subjectInOutHashes/"+fileindex+"-outgoing.txt");
+
+			FileOutputStream fos = new FileOutputStream(fileOutgoing);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(incoming);
+			oos.close();
+			fos.close();
+			System.out.println("Outgoing map for "+ fileindex + " saved");
+		}
+		catch(IOException ioe){
+			System.out.println(ioe);
+		}
+
+		//Printing for hashmap
+		/*
 		Set incSet = incoming.entrySet();
 		Iterator incIter = incSet.iterator();
 		while(incIter.hasNext()){
@@ -75,6 +111,9 @@ public class App {
 			System.out.println(me.getKey()+ ": ");
 			System.out.println(me.getValue());
 		}
+		*/
+
+
 		//Need to create another program to do the Importance function,
 		// based off the InOut code obviously.
 
