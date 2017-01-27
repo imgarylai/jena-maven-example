@@ -10,4 +10,4 @@ if grep 'FAILURE' installlog.txt; then
    exit 1
 fi
 
-mvn -DskipTests=true exec:java -e
+mvn -DskipTests=true exec:java -e 

@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Random;
+import java.util.*;
 import java.io.PrintWriter;
 import java.io.IOException;
 
@@ -23,12 +24,12 @@ public class App {
 	public static void main(String[] args) {
 		//System.out.println("Starting!");
 
-		/*
+
 		LoadLogger logger = new LoadLogger();
 		logger.loadLogger();
 		InferenceModel inf = new InferenceModel();
 		inf.makeInferenceModel();
-		*/
+
 
 		// Walk parameters
 		//---------------------------------------------------------------------------------
@@ -48,8 +49,32 @@ public class App {
 		ArrayList<Resource> zero = reader.loadSubjectList(0);
 
 		System.out.println("File 0.txt is size: " + zero.size());
-		//Need to get batched subjects from the subject list
 
+		HashMap incoming = new HashMap();
+		HashMap outgoing = new HashMap();
+
+
+		int count = 0;
+		for(Resource x: zero){
+			InOut x_io = new InOut(x);
+
+			incoming.put(x, x_io.getIncoming());
+			//outgoing.put(x, x_io.getOutgoing());
+
+			count++;
+
+			if(count > 100){
+				break;
+			}
+		}
+
+		Set incSet = incoming.entrySet();
+		Iterator incIter = incSet.iterator();
+		while(incIter.hasNext()){
+			Map.Entry me = (Map.Entry) incIter.next();
+			System.out.println(me.getKey()+ ": ");
+			System.out.println(me.getValue());
+		}
 		//Need to create another program to do the Importance function,
 		// based off the InOut code obviously.
 
@@ -161,8 +186,8 @@ class Walker{
 
 class InOut{
 	Resource core;
-	ArrayList<SubjectPredicatePair> incoming;
-	ArrayList<PredicateObjectPair> outgoing;
+	ArrayList<Statement> incoming;
+	ArrayList<Statement> outgoing;
 
 	int incomingLength;
 	int outgoingLength;
@@ -170,11 +195,11 @@ class InOut{
 	public InOut(Resource r){
 		this.core = r;
 
-		ArrayList<SubjectPredicatePair> inc = new ArrayList<SubjectPredicatePair>();
-		ArrayList<PredicateObjectPair> out = new ArrayList<PredicateObjectPair>();
+		ArrayList<Statement> inc = new ArrayList<Statement>();
+		ArrayList<Statement> out = new ArrayList<Statement>();
 
-		inc = getIncoming(core);
-		out = getOutgoing(core);
+		inc = makeIncoming(core);
+		out = makeOutgoing(core);
 
 		this.incoming = inc;
 		this.outgoing = out;
@@ -190,13 +215,23 @@ class InOut{
 		return outgoingLength;
 	}
 
-	public ArrayList<SubjectPredicatePair> getIncoming(Resource resourceIn){
+	public ArrayList<Statement> getIncoming(){
+		return incoming;
+	}
+	public ArrayList<Statement> getOutgoing(){
+		return outgoing;
+	}
+
+	private ArrayList<Statement> makeIncoming(Resource resourceIn){
 		// incoming
 		Resource s = null;
 		Property p = null;
-		StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
 
-		ArrayList<SubjectPredicatePair> result = new ArrayList<SubjectPredicatePair>();
+		ArrayList<Statement> result = new ArrayList<Statement>();
+
+		//System.out.println(resourceIn);
+
+		StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
 
 		while(oi.hasNext()){
 			Statement statement = oi.nextStatement();
@@ -205,21 +240,25 @@ class InOut{
 
 
 			if(checkProperty(predicate.toString()) && checkResource(subject.toString())) {
-				SubjectPredicatePair pair = new SubjectPredicatePair(subject, predicate);
-				result.add(pair);
+				result.add(statement);
 			}
 		}
+
 		return result;
 	}
 
 
-	public ArrayList<PredicateObjectPair> getOutgoing(Resource resourceIn){
+	private ArrayList<Statement> makeOutgoing(Resource resourceIn){
 		// outgoing
 		Property p = null;
 		RDFNode r = null;
-		StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
 
-		ArrayList<PredicateObjectPair> result = new ArrayList<PredicateObjectPair>();
+
+		ArrayList<Statement> result = new ArrayList<Statement>();
+
+		//System.out.println(resourceIn);
+
+		StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
 
 		while (oo.hasNext()){
 			Statement statement = oo.nextStatement();
@@ -227,10 +266,11 @@ class InOut{
 			RDFNode   object    = statement.getObject();
 
 			if(checkProperty(predicate.toString()) && checkResource(object.toString())) {
-				PredicateObjectPair pair = new PredicateObjectPair(predicate, object.asResource());
-				result.add(pair);
+				result.add(statement);
 			}
 		}
+
+
 		return result;
 	}
 
