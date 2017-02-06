@@ -62,8 +62,15 @@ public class App {
 		for(Resource x: zero){
 			InOut x_io = new InOut(x);
 
-			incoming.put(x, x_io.getIncoming());
-			outgoing.put(x, x_io.getOutgoing());
+
+			Model inWriteModel = ModelFactory.createDefaultModel();
+			Model outWriteModel = ModelFactory.createDefaultModel();
+
+			inWriteModel.add(x_io.getIncoming());
+			outWriteModel.add(x_io.getOutgoing());
+
+			incoming.put(x.toString(), inWriteModel);
+			outgoing.put(x.toString(), outWriteModel);
 
 			count++;
 
@@ -221,149 +228,6 @@ class Walker{
 		toPrint.add(wlk);
 	}
 }
-
-
-class InOut{
-	Resource core;
-	ArrayList<Statement> incoming;
-	ArrayList<Statement> outgoing;
-
-	int incomingLength;
-	int outgoingLength;
-
-	public InOut(Resource r){
-		this.core = r;
-
-		ArrayList<Statement> inc = new ArrayList<Statement>();
-		ArrayList<Statement> out = new ArrayList<Statement>();
-
-		inc = makeIncoming(core);
-		out = makeOutgoing(core);
-
-		this.incoming = inc;
-		this.outgoing = out;
-
-		this.incomingLength = incoming.size();
-		this.outgoingLength = outgoing.size();
-	}
-
-	public int getSizeIncoming(){
-		return incomingLength;
-	}
-	public int getSizeOutgoing(){
-		return outgoingLength;
-	}
-
-	public ArrayList<Statement> getIncoming(){
-		return incoming;
-	}
-	public ArrayList<Statement> getOutgoing(){
-		return outgoing;
-	}
-
-	private ArrayList<Statement> makeIncoming(Resource resourceIn){
-		// incoming
-		Resource s = null;
-		Property p = null;
-
-		ArrayList<Statement> result = new ArrayList<Statement>();
-
-		//System.out.println(resourceIn);
-
-		StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
-
-		while(oi.hasNext()){
-			Statement statement = oi.nextStatement();
-			Resource  subject   = statement.getSubject();
-			Property  predicate = statement.getPredicate();
-
-
-			if(checkProperty(predicate.toString()) && checkResource(subject.toString())) {
-				result.add(statement);
-			}
-		}
-
-		return result;
-	}
-
-
-	private ArrayList<Statement> makeOutgoing(Resource resourceIn){
-		// outgoing
-		Property p = null;
-		RDFNode r = null;
-
-
-		ArrayList<Statement> result = new ArrayList<Statement>();
-
-		//System.out.println(resourceIn);
-
-		StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
-
-		while (oo.hasNext()){
-			Statement statement = oo.nextStatement();
-			Property  predicate = statement.getPredicate();
-			RDFNode   object    = statement.getObject();
-
-			if(checkProperty(predicate.toString()) && checkResource(object.toString())) {
-				result.add(statement);
-			}
-		}
-
-
-		return result;
-	}
-
-	public boolean checkResource(String object) {
-		String dbo = "dbpedia.org/resource";
-		Pattern dboPattern = Pattern.compile(dbo);
-		Matcher dboMatcher = dboPattern.matcher(object);
-		return dboMatcher.find();
-	}
-
-	public boolean checkProperty(String object) {
-		String dbo = "dbpedia.org/ontology";
-		Pattern dboPattern = Pattern.compile(dbo);
-		Matcher dboMatcher = dboPattern.matcher(object);
-		return dboMatcher.find();
-	}
-}
-
-
-
-
-class PredicateObjectPair{
-	Property predicate;
-	Resource object;
-	public PredicateObjectPair(Property p, Resource r){
-		this.predicate = p;
-		this.object = r;
-	}
-
-	public Property getPredicate(){
-		return predicate;
-	}
-	public Resource getObject(){
-		return object;
-	}
-}
-
-class SubjectPredicatePair{
-	Resource subject;
-	Property predicate;
-
-	public SubjectPredicatePair(Resource r, Property p){
-		this.subject = r;
-		this.predicate = p;
-	}
-
-	public Resource getSubject(){
-		return subject;
-	}
-	public Property getPredicate(){
-		return predicate;
-	}
-}
-
 
 
 class RandomWalk{
