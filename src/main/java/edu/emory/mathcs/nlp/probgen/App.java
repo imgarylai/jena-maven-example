@@ -52,8 +52,11 @@ public class App {
 		int fileindex = 0;
 		ArrayList<Resource> zero = reader.loadSubjectList(fileindex);
 
-		System.out.println("File 0.txt is size: " + zero.size());
+		ConnectionsList cl = new ConnectionsList();
+		cl.makeConnectionsList(dbpediaInfModel, zero, fileindex);
+		System.out.println("Finished connections list call");
 
+		/*
 		HashMap incoming = new HashMap();
 		HashMap outgoing = new HashMap();
 
@@ -108,6 +111,7 @@ public class App {
 		catch(IOException ioe){
 			System.out.println(ioe);
 		}
+		*/
 
 		//Printing for hashmap
 		/*
