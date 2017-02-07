@@ -115,6 +115,9 @@ class ConnectionsList{
 		//Property p = dbpediaInfModel.getProperty("http://dbpedia.org/ontology/type");
 		System.out.println("Start makeConnectionsList!");
 
+		long startTime = System.currentTimeMillis();
+		long endTime;
+
 		Property pIn = dbpediaInfModel.createProperty("http://dbpedia.org/ontology/",  "incomingConnections");
 		Property pOut = dbpediaInfModel.createProperty("http://dbpedia.org/ontology/", "outgoingConnections");
 
@@ -127,12 +130,16 @@ class ConnectionsList{
 		int fileindex = 0;
 
 		for(Resource r : subjects){
-
+			//long innerStartTime = System.currentTimeMillis();
+			System.out.println(localResourceCount);
 			InOut rIO = new InOut(r);
+			//long inoutTime = System.currentTimeMillis();
+			//System.out.println("Time to get InOut for Resource: " + (inoutTime - innerStartTime) );
 
+
+			// This all takes 1 or less milliseconds
 			String incomingConnections = Integer.toString(rIO.getSizeIncoming());
 			String outgoingConnections = Integer.toString(rIO.getSizeOutgoing());
-			//System.out.println("incomingConnections: " + incomingConnections);
 
 			Literal iCL = ResourceFactory.createPlainLiteral(incomingConnections);
 			Literal oCL = ResourceFactory.createPlainLiteral(outgoingConnections);
@@ -146,11 +153,12 @@ class ConnectionsList{
 			localResourceCount++;
 			globalResourceCount++;
 
+
 			if(globalResourceCount % 100 == 0){
 				System.out.println("" + globalResourceCount + "recorded!");
 			}
 
-			if(localResourceCount > 2500){ // was 100000
+			if(localResourceCount > 100){ // was 2500
 				writeConnectionsOut(toWriteIn, bigFileIndex, fileindex, "in");
 				writeConnectionsOut(toWriteOut, bigFileIndex, fileindex, "out");
 
@@ -163,6 +171,9 @@ class ConnectionsList{
 				localResourceCount = 0;
 				fileindex++;
 
+				endTime = System.currentTimeMillis();
+				System.out.println("Total for full loop time: " + (endTime - startTime) );
+				break;
 			}
 
 		}

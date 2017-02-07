@@ -22,19 +22,29 @@ public class InOut{
 	int outgoingLength;
 
 	public InOut(Resource r){
+		long startTime = System.currentTimeMillis();
 		this.core = r;
 
 		ArrayList<Statement> inc = new ArrayList<Statement>();
 		ArrayList<Statement> out = new ArrayList<Statement>();
 
+		// This is like all of the time.
 		inc = makeIncoming(core);
+		long incomingTime = System.currentTimeMillis();
+		System.out.println("Time for make incoming: " + (incomingTime - startTime) );
+
 		out = makeOutgoing(core);
+		long makeOutgoing = System.currentTimeMillis();
+		System.out.println("Time for make outgoing: " + (makeOutgoing - incomingTime) );
+
 
 		this.incoming = inc;
 		this.outgoing = out;
 
 		this.incomingLength = incoming.size();
 		this.outgoingLength = outgoing.size();
+		long endTime = System.currentTimeMillis();;
+		System.out.println("Time for full: " + (endTime - startTime) );
 	}
 
 	public int getSizeIncoming(){
@@ -53,6 +63,7 @@ public class InOut{
 
 	private ArrayList<Statement> makeIncoming(Resource resourceIn){
 		// incoming
+
 		Resource s = null;
 		Property p = null;
 
@@ -86,9 +97,14 @@ public class InOut{
 		ArrayList<Statement> result = new ArrayList<Statement>();
 
 		//System.out.println(resourceIn);
-
+		long startTime = System.currentTimeMillis();
 		StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
 
+		int count = 0;
+
+		// This is the culprit!
+		// either there are too many items to be looped over, or the check regex is way to slow
+		// probably can trim down a bit.
 		while (oo.hasNext()){
 			Statement statement = oo.nextStatement();
 			Property  predicate = statement.getPredicate();
@@ -97,8 +113,12 @@ public class InOut{
 			if(checkProperty(predicate.toString()) && checkResource(object.toString())) {
 				result.add(statement);
 			}
-		}
+			count++;
 
+		}
+		System.out.println("loops made: " + count);
+		long loopTime = System.currentTimeMillis();
+		System.out.println("Time for make outgoing loop: " + (loopTime - startTime) );
 
 		return result;
 	}

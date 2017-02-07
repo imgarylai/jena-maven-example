@@ -49,11 +49,12 @@ public class App {
 
 		SubjectList reader = new SubjectList();
 
-		int fileindex = 0;
-		ArrayList<Resource> zero = reader.loadSubjectList(fileindex);
+		int fileindex = 2;
+		System.out.println("Starting " + fileindex);
+		ArrayList<Resource> sectionNum = reader.loadSubjectList(fileindex);
 
 		ConnectionsList cl = new ConnectionsList();
-		cl.makeConnectionsList(dbpediaInfModel, zero, fileindex);
+		cl.makeConnectionsList(dbpediaInfModel, sectionNum, fileindex);
 		System.out.println("Finished connections list call");
 
 		/*
