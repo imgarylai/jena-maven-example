@@ -72,7 +72,7 @@ public class InOut{
 		//System.out.println(resourceIn);
 
 		StmtIterator oi = dbpediaInfModel.listStatements(s, p, resourceIn);
-
+		int count = 0;
 		while(oi.hasNext()){
 			Statement statement = oi.nextStatement();
 			Resource  subject   = statement.getSubject();
@@ -82,7 +82,9 @@ public class InOut{
 			if(checkProperty(predicate.toString()) && checkResource(subject.toString())) {
 				result.add(statement);
 			}
+			count++;
 		}
+		System.out.println("loops made incoming: " + count);
 
 		return result;
 	}
@@ -98,6 +100,9 @@ public class InOut{
 
 		//System.out.println(resourceIn);
 		long startTime = System.currentTimeMillis();
+
+		// is the iterator getting to many candidates?
+		//
 		StmtIterator oo = dbpediaInfModel.listStatements(resourceIn, p, r);
 
 		int count = 0;
@@ -105,6 +110,8 @@ public class InOut{
 		// This is the culprit!
 		// either there are too many items to be looped over, or the check regex is way to slow
 		// probably can trim down a bit.
+
+		//Why is incoming taking so much less time?
 		while (oo.hasNext()){
 			Statement statement = oo.nextStatement();
 			Property  predicate = statement.getPredicate();
@@ -116,7 +123,7 @@ public class InOut{
 			count++;
 
 		}
-		System.out.println("loops made: " + count);
+		System.out.println("loops made outgoing: " + count);
 		long loopTime = System.currentTimeMillis();
 		System.out.println("Time for make outgoing loop: " + (loopTime - startTime) );
 
