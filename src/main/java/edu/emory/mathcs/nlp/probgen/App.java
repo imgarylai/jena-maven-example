@@ -7,13 +7,15 @@ import java.util.regex.Pattern;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Random;
+import java.io.PrintWriter;
+import java.io.IOException;
 
 import static edu.emory.mathcs.nlp.probgen.InferenceModel.dbpediaInfModel;
 
 public class App {
 
     public static void main(String[] args) {
-        System.out.println("Starting!");
+        //System.out.println("Starting!");
 
         LoadLogger logger = new LoadLogger();
         logger.loadLogger();
@@ -27,21 +29,29 @@ public class App {
         ResourceObject obama = new ResourceObject(obamaResource);
         ResourceObject abe   = new ResourceObject(abeResource);
 
-        /*
-        obama.printBoth();
-        abe.printBoth();
+        try{
+	        PrintWriter writer = new PrintWriter("randomwalk-output.txt", "UTF-8");
 
-        System.out.println("Random Obama Property: "+obama.getRandomProperty().toString());
-        System.out.println("Random Obama Resource: "+obama.getRandomTypeResource().toString());
 
-        System.out.println("Random Abe Property: "+abe.getRandomProperty().toString());
-        System.out.println("Random Abe Resource: "+abe.getRandomTypeResource().toString());
-		*/
+			int maxNumberOfSteps = 4;
+			int iterations = 10;
 
-		RandomWalk r = new RandomWalk(obama);
-		int numberOfSteps = 10;
-		for(int i = 0; i < numberOfSteps; i++){
-			r.takeStep();
+			for(int j = 0; j < iterations; j++){
+				// Must restart walk
+				RandomWalk r = new RandomWalk(obama);
+				String result = "";
+
+				for(int i = 0; i < maxNumberOfSteps; i++){
+					result = r.takeStep();
+					if(result.equals("err")){ break; }
+					writer.print(result);
+				}
+				writer.println();
+			}
+			writer.close();
+
+		} catch (IOException e){
+			System.out.println(e);
 		}
 
 
@@ -59,82 +69,86 @@ class RandomWalk{
 		this.chain = chain;
 	}
 
-	public void takeStep(){
+	public String takeStep(){
+		int tryDifferentProperty = 5;
+
+		//System.out.println("taking step...");
 		ResourceObject previous = chain.get(chain.size() - 1);
 
 		Resource previousResource = previous.getOriginalResource();
 		Property previousRandomProperty = previous.getRandomProperty();
 
-		int rerollCount = 0;
-		while(previousRandomProperty == null){
-			if(rerollCount > 3){
-				return;
-			}
-			//System.out.println("Reroll previousRandomProperty");
-			previousRandomProperty = previous.getRandomProperty();
-			rerollCount++;
+		// if the previousRandomProperty was null, there are no valid
+		// properties to choose from, so walk hit a wall.
+		if(previousRandomProperty == null){
+			//System.out.println("	last resource has no valid properties...");
+			return "err";
 		}
-
 
 		NodeIterator candidates = dbpediaInfModel.listObjectsOfProperty(previousResource, previousRandomProperty);
 
-		ArrayList<Literal> nextLiteral = new ArrayList<Literal>();
-		ArrayList<Resource> nextResource = new ArrayList<Resource>();
+		ArrayList<Literal> nextCandidateLiteralList = new ArrayList<Literal>();
+		ArrayList<Resource> nextCandidateResourceList = new ArrayList<Resource>();
 
 		while(candidates.hasNext()){
 			RDFNode node = candidates.next();
 
 			if(node.isLiteral()){
-				nextLiteral.add(node.asLiteral());
+				nextCandidateLiteralList.add(node.asLiteral());
 			}
 			if(node.isResource()){
-				nextResource.add(node.asResource());
+				nextCandidateResourceList.add(node.asResource());
 			}
 		}
 
-		while(nextResource.isEmpty()){
-			//Reroll
-			nextLiteral.clear();
-			nextResource.clear();
+		int attempt = 0;
+		while(nextCandidateResourceList.isEmpty()){
+			// the candidate resource list is probably empty because
+			// for the verb chosen, the answer was a literal
 
+			//System.out.println("	reroll property, " + previousRandomProperty.toString().replace("http://dbpedia.org/ontology/","") + " didn't link to any resources...");
+
+			// So clear the canditate literals and resources, because
+			// we actually have no resources
+			nextCandidateLiteralList.clear();
+			nextCandidateResourceList.clear();
+
+			// Gets a new 'link' from the previous item on the walk
 			previousRandomProperty = previous.getRandomProperty();
-
-			int rerollCount2 = 0;
-			while(previousRandomProperty == null){
-				if(rerollCount2 > 3){
-					return;
-				}
-				//System.out.println("Reroll previousRandomProperty");
-				previousRandomProperty = previous.getRandomProperty();
-				rerollCount2++;
+			if(previousRandomProperty == null){
+				return "err";
 			}
 
-			NodeIterator newCandidates = dbpediaInfModel.listObjectsOfProperty(previousResource, previousRandomProperty);
 
+			NodeIterator newCandidates = dbpediaInfModel.listObjectsOfProperty(previousResource, previousRandomProperty);
 			while(newCandidates.hasNext()){
 				RDFNode newNode = newCandidates.next();
 
 				if(newNode.isLiteral()){
-					nextLiteral.add(newNode.asLiteral());
+					nextCandidateLiteralList.add(newNode.asLiteral());
 				}
 				if(newNode.isResource()){
-					nextResource.add(newNode.asResource());
+					nextCandidateResourceList.add(newNode.asResource());
 				}
+			}
+
+			attempt++;
+			if(attempt > tryDifferentProperty){
+				return "err";
 			}
 
 		}
 
-		Resource resultResource = nextResource.get(new Random().nextInt(nextResource.size()));
+		Resource resultResource = nextCandidateResourceList.get(new Random().nextInt(nextCandidateResourceList.size()));
 
-		System.out.println(previousResource + " " + previousRandomProperty + " " + resultResource);
-		System.out.println();
-
+		String out = "<\"" + previousResource.toString().replace("http://dbpedia.org/resource/","") + "\", \"" + previousRandomProperty.toString().replace("http://dbpedia.org/ontology/","") + "\", \"" + resultResource.toString().replace("http://dbpedia.org/resource/","") + "\">";
+		System.out.println(out);
 
 		ResourceObject next = new ResourceObject(resultResource);
 		chain.add(next);
 
 		// Currently going to only use Resources, soon will use literals
-		return;
+		return out;
 	}
 }
 
